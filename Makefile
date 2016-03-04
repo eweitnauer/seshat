@@ -1,6 +1,7 @@
 CC=g++
+# CC=em++
 LINK=-lxerces-c -lm
-FLAGS = -O3 -Wno-unused-result #-I/path/to/boost/
+FLAGS = -O3 -Wno-unused-result -I/usr/local/include -I/usr/include -ferror-limit=2 -D__x86_64__
 
 OBJFEAS=symfeatures.o featureson.o online.o
 OBJMUESTRA=sample.o stroke.o

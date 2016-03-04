@@ -36,7 +36,7 @@ class SymFeatures{
   static const int OFF_FEAT = 9;
   double means_on[ON_FEAT], means_off[OFF_FEAT];
   double  stds_on[ON_FEAT],  stds_off[OFF_FEAT];
-  
+
 public:
   SymFeatures(char *mav_on, char *mav_off);
   ~SymFeatures();

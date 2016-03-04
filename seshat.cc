@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
 
   int option;
   while ((option = getopt (argc, argv, "c:i:o:r:d:")) != -1)
-    switch (option) {  
+    switch (option) {
     case 'c': strcpy(config, optarg); rc=true; break;
     case 'i': strcpy(input,  optarg); ri=true; break;
     case 'o': strcpy(output, optarg); ro=true; break;
@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
     case 'd': strcpy(dot,    optarg); rd=true; break;
     case '?': usage(argv[0]); return -1;
     }
-  
+
   //Check mandatory args
   if( !rc || !ri ) {
     usage(argv[0]);
@@ -82,7 +82,9 @@ int main(int argc, char *argv[]) {
   printf("\n");
 
   //Parse math expression
-  seshat.parse_me(&m);
-  
+  Hypothesis *h = seshat.parse_me(&m);
+
+  printf("\n");
+
   return 0;
 }

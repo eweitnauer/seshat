@@ -37,8 +37,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with RNNLIB.  If not, see <http://www.gnu.org/licenses/>.*/
 
-#ifndef _INCLUDED_ClassificationLayer_h  
-#define _INCLUDED_ClassificationLayer_h  
+#ifndef _INCLUDED_ClassificationLayer_h
+#define _INCLUDED_ClassificationLayer_h
 
 #include "SoftmaxLayer.hpp"
 #include "NeuronLayer.hpp"
@@ -54,12 +54,12 @@ struct ClassificationLayer: public NetworkOutput
 	vector<int> numErrorsByClass;
 	vector<int> numTargetsByClass;
 	vector<int> outputs;
-	
+
 	//functions
 	ClassificationLayer(ostream& o, const vector<string>& labs):
 		out(o),
 		labels(labs),
-		targets(labels.size()),	
+		targets(labels.size()),
 		confusionMatrix(labels.size()),
 		numErrorsByClass(labels.size()),
 		numTargetsByClass(labels.size())
@@ -89,7 +89,7 @@ struct ClassificationLayer: public NetworkOutput
 			int targetClass = seq.targetClasses[pt].front();
 			if (targetClass >= 0)
 			{
-				View<int> targs = targets[pt];	
+				View<int> targs = targets[pt];
 				targs[targetClass] = 1;
 				crossEntropyError -= set_error(pt, targetClass);
 				++confusionMatrix[targetClass][outputClass];
@@ -176,7 +176,9 @@ struct BinaryClassificationLayer: public ClassificationLayer, public NeuronLayer
 	real_t set_error(int pt, int targetClass)
 	{
 		real_t targetProb = class_prob(pt, targetClass);
-		((View<real_t>&)outputErrors[pt])[0] = (targetClass ? -(1/targetProb) : (1/targetProb));
+		//((View<real_t>&)outputErrors[pt])[0] = (targetClass ? -(1/targetProb) : (1/targetProb));
+		// eweitnauer: will this replacement work?
+		outputErrors[pt][0] = (targetClass ? -(1/targetProb) : (1/targetProb));
 		return log(targetProb);
 	}
 };

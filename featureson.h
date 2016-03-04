@@ -43,6 +43,7 @@ covered by the following copyright and permission notice:
 #include <iomanip>
 #include <vector>
 #include <values.h>
+#include <float.h>
 #include "online.h"
 
 #define MAXNUMHATS 200
@@ -78,7 +79,7 @@ class sentenceF {
     string transcrip;
     int n_frames;
     frame * frames;
-    
+
     sentenceF();
     ~sentenceF();
 

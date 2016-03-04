@@ -36,21 +36,21 @@ SymRec::SymRec(char *config) {
   //RNN classifier configuration
   char  RNNon[TSIZE],    RNNoff[TSIZE];
   char  RNNmavON[TSIZE], RNNmavOFF[TSIZE];
-  
+
   char id[TSIZE], info[TSIZE], path[TSIZE];
 
   RNNon[0] = RNNoff[0] = RNNmavON[0] = RNNmavOFF[0] = 0;
   path[0] = 0;
   RNNalpha=-1.0;
-  
+
   while( !feof(fd) ) {
     fscanf(fd, "%s", id);   //Field id
     fscanf(fd, "%s", info); //Info
-    
+
     //Remove the last \n character
     if( info[strlen(info)-1] == '\n' )
       info[strlen(info)-1] = '\0';
-    
+
     if(      !strcmp(id,"RNNon") )       strcpy(RNNon,     info);
     else if( !strcmp(id,"RNNoff") )      strcpy(RNNoff,    info);
     else if( !strcmp(id,"RNNmavON") )    strcpy(RNNmavON,  info);
@@ -58,7 +58,7 @@ SymRec::SymRec(char *config) {
     else if( !strcmp(id,"RNNalpha")  )   RNNalpha = atof(info);
     else if( !strcmp(id,"SymbolTypes") ) strcpy(path, info);
   }
-  
+
   if( RNNalpha <= 0.0 || RNNalpha >= 1.0 ) {
     fprintf(stderr, "Error: loading config file '%s': must be 0 < RNNalpha < 1\n", config);
     exit(-1);
@@ -112,22 +112,22 @@ SymRec::SymRec(char *config) {
     key2cl[idclase] = clase;
     cl2key[clase] = idclase;
     idclase++;
-    
+
     if( T=='n' )       type[ cl2key[clase] ] = 0; //Centroid
     else if( T=='a' )  type[ cl2key[clase] ] = 1; //Ascender
     else if( T=='d' )  type[ cl2key[clase] ] = 2; //Descender
     else if( T=='m' )  type[ cl2key[clase] ] = 3; //Middle
     else {
-      fprintf(stderr, "SymRec: Error reading symbol types\n");      
+      fprintf(stderr, "SymRec: Error reading symbol types\n");
       exit(-1);
     }
   }
 
   //Features extraction
   FEAS = new SymFeatures(RNNmavON, RNNmavOFF);
-  
+
   //Create and load BLSTM models
-  
+
   //Online info
   ConfigFile conf_on(RNNon);
   header_on.targetLabels = conf_on.get_list<string>("targetLabels");
@@ -143,10 +143,10 @@ SymRec::SymRec(char *config) {
 
   //build weight container after net is created
   wc_on->build();
-  
+
   //build the network after the weight container
   blstm_on->build();
-  
+
   //create trainer
   Trainer trainer_on(cout, blstm_on, conf_on, wc_on, &deh_on);
   if (conf_on.get<bool>("loadWeights", false))
@@ -154,7 +154,7 @@ SymRec::SymRec(char *config) {
 
   //Offline info
   ConfigFile conf_off(RNNoff);
-  
+
   //Check if the targetLabels are the same for both online and offline RNN-BLSTM
   vector<string> aux = conf_off.get_list<string>("targetLabels");
   if( aux.size() != header_on.targetLabels.size() ) {
@@ -256,7 +256,7 @@ int SymRec::clasificar(Sample *M, list<int> *LT, const int NB, int *vclase, floa
     if( M->getStroke(*it)->rs > aux.rs ) aux.rs = M->getStroke(*it)->rs;
     if( M->getStroke(*it)->rt > aux.rt ) aux.rt = M->getStroke(*it)->rt;
   }
-  
+
   return classify(M, &aux, NB, vclase, vpr, as, ds);
 }
 
@@ -269,14 +269,14 @@ int SymRec::classify(Sample *M, SegmentHyp *SegHyp, const int NB, int *vclase, f
   for(list<int>::iterator it=SegHyp->stks.begin(); it!=SegHyp->stks.end(); it++) {
     for(int j=0; j<M->getStroke(*it)->getNpuntos(); j++) {
       Punto *p = M->getStroke(*it)->get(j);
-	
+
       if( M->getStroke(*it)->ry < regy )
 	regy = M->getStroke(*it)->ry;
       if( M->getStroke(*it)->rt > regt )
 	regt = M->getStroke(*it)->rt;
-      
+
       SegHyp->cen += p->y;
-	
+
       N++;
     }
 
@@ -297,7 +297,7 @@ int SymRec::classify(Sample *M, SegmentHyp *SegHyp, const int NB, int *vclase, f
 
   //Offline features extraction: FKI (9 features)
   feat_off = FEAS->getOfflineFKI(img, Rows, Cols);
-  
+
   //cout << feat_off->inputs;
 
   for(int i=0; i<Rows; i++)
@@ -305,8 +305,13 @@ int SymRec::classify(Sample *M, SegmentHyp *SegHyp, const int NB, int *vclase, f
   delete[] img;
 
   //n-best classification
-  pair<float,int> clason[NB], clasoff[NB], clashyb[2*NB];
-    
+
+  // eweitnauer: rewrote the line below due to error: error: variable length array of non-POD element type 'pair<float, int>'
+  // pair<float,int> clason[NB], clasoff[NB], clashyb[2*NB];
+  pair<float,int> *clason = new pair<float,int>[NB];
+  pair<float,int> *clasoff = new pair<float,int>[NB];
+  pair<float,int> *clashyb = new pair<float,int>[2*NB];
+
   for(int i=0; i<NB; i++) {
     clason[i].first = 0.0; //probability
     clason[i].second = -1; //class id
@@ -322,7 +327,7 @@ int SymRec::classify(Sample *M, SegmentHyp *SegHyp, const int NB, int *vclase, f
 
   //Online + Offline n-best linear combination
   //alpha * pr(on) + (1 - alpha) * pr(off)
-    
+
   for(int i=0; i<NB; i++) {
     clason[i].first  *= RNNalpha;       //online  *    alpha
     clasoff[i].first *= 1.0 - RNNalpha; //offline * (1-alpha)
@@ -331,25 +336,25 @@ int SymRec::classify(Sample *M, SegmentHyp *SegHyp, const int NB, int *vclase, f
   int hybnext=0;
   for(int i=0; i<NB; i++) {
     if( clason[i].second >= 0 ) {
-      
+
       clashyb[hybnext].first  = clason[i].first;
       clashyb[hybnext].second = clason[i].second;
-      
+
       for(int j=0; j<NB; j++)
 	if( clason[i].second == clasoff[j].second ) {
 	  clashyb[hybnext].first += clasoff[j].first;
 	  break;
 	}
-      
+
       hybnext++;
     }
-      
+
     if( clasoff[i].second < 0 ) continue;
     bool found=false;
     for(int j=0; j<NB && !found; j++)
       if( clasoff[i].second == clason[j].second )
 	found = true;
-      
+
     //Add the (1-alpha) probability if the class is in OFF but not in ON
     if( !found ) {
       clashyb[hybnext].first  = clasoff[i].first;
@@ -357,13 +362,17 @@ int SymRec::classify(Sample *M, SegmentHyp *SegHyp, const int NB, int *vclase, f
       hybnext++;
     }
   }
-    
+
   sort( clashyb, clashyb+hybnext, std::greater< pair<float,int> >() );
   for(int i=0; i<min(hybnext, NB); i++) {
     vpr[i]    = clashyb[i].first;
     vclase[i] = clashyb[i].second;
   }
-    
+
+  delete [] clason;
+  delete [] clasoff;
+  delete [] clashyb;
+
   return SegHyp->cen;
 }
 
@@ -376,25 +385,25 @@ void SymRec::BLSTMclassification( Mdrnn *net, DataSequence *seq, pair<float,int>
   Layer *L = (Layer*)net->outputLayers.front();
   int NVEC=L->outputActivations.shape[0];
   int NCLA=L->outputActivations.shape[1];
-  
+
   pair<float,int> *prob_class = new pair<float,int>[NCLA];
   for(int i=0; i<NCLA; i++)
     prob_class[i].second = cl2key[ header_on.targetLabels[i] ]; //targetLabels on = targetLabels off
-  
+
   for(int i=0; i<NCLA; i++)
     prob_class[i].first = 0.0;
-  
+
   //Compute the average posterior probability per class
   for(int nvec=0; nvec<NVEC; nvec++)
     for(int ncla=0; ncla<NCLA; ncla++)
       prob_class[ncla].first += L->outputActivations.data[nvec*NCLA + ncla];
-  
+
   for(int ncla=0; ncla<NCLA; ncla++)
     prob_class[ncla].first /= NVEC;
 
   //Sort classification result by its probability
   sort(prob_class, prob_class+NCLA, std::greater< pair<float,int> >());
-  
+
   //Copy n-best to output vector
   for(int i=0; i<NB; i++)
     claspr[i] = prob_class[i];

@@ -430,8 +430,8 @@ struct Mdrnn {
       out << *it->second << endl;
     }
     prt_line(out);
-    PRINT(bidirectional, out);
-    PRINT(symmetry, out);
+    //PRINT(bidirectional, out); // eweitnauer: could not get this to compile on OSX
+    //PRINT(symmetry, out);      // eweitnauer: could not get this to compile on OSX
     if (inputBlockLayer) {
       PRINT(inputBlock, out);
     }

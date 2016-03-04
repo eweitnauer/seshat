@@ -195,6 +195,31 @@ static ostream& COUT = cout;
     (assert((condition))); exit(0);                                     \
   }
 
+
+template<class R1, class R2> static size_t range_min_size (
+    const R1& a, const R2& b) {
+  return min(boost::size(a), boost::size(b));
+}
+template<class R1, class R2, class R3> static size_t range_min_size (
+    const R1& a, const R2& b, const R3& c) {
+  return min(min(boost::size(a), boost::size(b)), boost::size(c));
+}
+template<class R1, class R2, class R3, class R4> static size_t range_min_size (
+    const R1& a, const R2& b, const R3& c, const R4& d) {
+  return min(min(min(
+      boost::size(a), boost::size(b)), boost::size(c)), boost::size(d));
+}
+template<class R1, class R2, class R3, class R4, class R5>
+static size_t range_min_size (
+    const R1& a, const R2& b, const R3& c, const R4& d, const R5& e) {
+  return min(min(
+      min(min(boost::size(a), boost::size(b)), boost::size(c)),
+      boost::size(d)), boost::size(e));
+}
+
+template <class C, class Tr, class R> static basic_ostream<C, Tr>& operator <<(
+    basic_ostream<C, Tr>& out, const R& r);
+
 //MISC FUNCTIONS
 static bool warn_unless (
     bool condition, const string& str, ostream& out = cout) {
@@ -408,7 +433,7 @@ pair<typename range_value<R>::type, typename range_value<R>::type>
 minmax(const R& r) {
   pair<
     typename range_const_iterator<R>::type,
-    typename range_const_iterator<R>::type> p = minmax_element(
+    typename range_const_iterator<R>::type> p = boost::minmax_element(
         boost::begin(r), boost::end(r));
   return make_pair(*p.first, *p.second);
 }
@@ -517,26 +542,6 @@ template<class R> void delete_range(R& r) {
        it != boost::end(r); ++it) {
     delete *it;
   }
-}
-template<class R1, class R2> static size_t range_min_size (
-    const R1& a, const R2& b) {
-  return min(boost::size(a), boost::size(b));
-}
-template<class R1, class R2, class R3> static size_t range_min_size (
-    const R1& a, const R2& b, const R3& c) {
-  return min(min(boost::size(a), boost::size(b)), boost::size(c));
-}
-template<class R1, class R2, class R3, class R4> static size_t range_min_size (
-    const R1& a, const R2& b, const R3& c, const R4& d) {
-  return min(min(min(
-      boost::size(a), boost::size(b)), boost::size(c)), boost::size(d));
-}
-template<class R1, class R2, class R3, class R4, class R5>
-static size_t range_min_size (
-    const R1& a, const R2& b, const R3& c, const R4& d, const R5& e) {
-  return min(min(
-      min(min(boost::size(a), boost::size(b)), boost::size(c)),
-      boost::size(d)), boost::size(e));
 }
 template <class R> static int arg_max(const R& r) {
   return distance(boost::begin(r), max_element(boost::begin(r), boost::end(r)));
@@ -805,24 +810,24 @@ template<class R1, class R2> static void range_divide_equals(
 //TUPLE OPERATIONS
 template<class T1, class T2> static ostream& operator << (
     ostream& out, const tuple<T1, T2>& t) {
-  out << t.get<0>() << " " << t.get<1>();
+  out << std::get<0>(t) << " " << std::get<1>(t);
   return out;
 }
 template<class T1, class T2, class T3> static ostream& operator << (
     ostream& out, const tuple<T1, T2, T3>& t) {
-  out << t.get<0>() << " " << t.get<1>() << " " << t.get<2>();
+  out << std::get<0>(t) << " " << std::get<1>(t) << " " << std::get<2>(t);
   return out;
 }
 template<class T1, class T2, class T3, class T4> static ostream& operator << (
     ostream& out, const tuple<T1, T2, T3, T4>& t) {
-  out << t.get<0>() << " " << t.get<1>() << " " << t.get<2>() << " "
-      << t.get<3>();
+  out << std::get<0>(t) << " " << std::get<1>(t) << " " << std::get<2>(t) << " "
+      << std::get<3>(t);
   return out;
 }
 template<class T1, class T2, class T3, class T4, class T5>
 static ostream& operator << (ostream& out, const tuple<T1, T2, T3, T4, T5>& t) {
-  out << t.get<0>() << " " << t.get<1>() << " " << t.get<2>() << " "
-      << t.get<3>() << " " << t.get<4>();
+  out << std::get<0>(t) << " " << std::get<1>(t) << " " << std::get<2>(t) << " "
+      << std::get<3>(t) << " " << std::get<4>(t);
   return out;
 }
 //PAIR OPERATIONS

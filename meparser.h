@@ -60,8 +60,8 @@ class meParser{
   ~meParser();
 
   //Parse math expression
-  void parse_me(Sample *M);
-  
+  Hypothesis *parse_me(Sample *M);
+
   //Output formatting methods
   void print_symrec(Hypothesis *H);
   void print_latex(Hypothesis *H);

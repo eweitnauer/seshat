@@ -37,8 +37,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with RNNLIB.  If not, see <http://www.gnu.org/licenses/>.*/
 
-#ifndef _INCLUDED_NeuronLayer_h  
-#define _INCLUDED_NeuronLayer_h  
+#ifndef _INCLUDED_NeuronLayer_h
+#define _INCLUDED_NeuronLayer_h
 
 #include "Layer.hpp"
 
@@ -60,7 +60,7 @@ template <class F> struct NeuronLayer: public FlatLayer
 		display(this->inputActivations, "inputActivations");
 		display(this->outputActivations, "outputActivations");
 		display(this->inputErrors, "inputErrors");
-		display(this->outputErrors, "outputErrors");	
+		display(this->outputErrors, "outputErrors");
 	}
 	void feed_forward(const vector<int>& coords)
 	{
@@ -68,9 +68,15 @@ template <class F> struct NeuronLayer: public FlatLayer
 	}
 	void feed_back(const vector<int>& coords)
 	{
-		LOOP(TDDD t, zip(this->inputErrors[coords], this->outputActivations[coords], this->outputErrors[coords]))
+		// eweitnauer: this did not compile on osx for me
+		// LOOP(TDDD t, zip(this->inputErrors[coords], this->outputActivations[coords], this->outputErrors[coords]))
+		// {
+		// 	t.get<0>() = F::deriv(t.get<1>()) * t.get<2>();
+		// }
+		// I replaced it with this:
+		for (int i = 0; i < this->inputErrors[coords].size(); ++i)
 		{
-			t.get<0>() = F::deriv(t.get<1>()) * t.get<2>();
+			this->inputErrors[coords][i] = F::deriv(this->outputActivations[coords][i]) * this->outputErrors[coords][i];
 		}
 	}
 };

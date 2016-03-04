@@ -37,8 +37,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with RNNLIB.  If not, see <http://www.gnu.org/licenses/>.*/
 
-#ifndef _INCLUDED_SoftmaxLayer_h  
-#define _INCLUDED_SoftmaxLayer_h  
+#ifndef _INCLUDED_SoftmaxLayer_h
+#define _INCLUDED_SoftmaxLayer_h
 
 #include <boost/algorithm/minmax_element.hpp>
 #include "NetworkOutput.hpp"
@@ -74,19 +74,24 @@ struct SoftmaxLayer: public FlatLayer{
 		unnormedActivations.reshape(logActivations);
 	}
 	void feed_forward(const vector<int>& coords)
-	{	
+	{
 		//transform to log scale and centre inputs on 0 for safer exponentiation
 		View<Log<real_t> > unnormedLogActs = unnormedlogActivations[coords];
 		real_t offset = pair_mean(minmax(this->inputActivations[coords]));
-		LOOP(TDL t, zip(this->inputActivations[coords], unnormedLogActs))
-		{
-			t.get<1>() = Log<real_t>(t.get<0>() - offset, true);
+		// eweitnauer: this did not compile on osx for me
+		// LOOP(TDL t, zip(this->inputActivations[coords], unnormedLogActs))
+		// {
+		// 	t.get<1>() = Log<real_t>(t.get<0>() - offset, true);
+		// }
+		// I replaced it with this:
+		for(int i=0; i < unnormedLogActs.size(); i++) {
+   		unnormedLogActs[i] = Log<real_t>(this->inputActivations[coords][i] - offset ,true);
 		}
 
 		//apply exponential
 		View<real_t> unnormedActs = unnormedActivations[coords];
 		transform(unnormedLogActs, unnormedActs, mem_fun_ref(&Log<real_t>::exp));
-		
+
 		//normalise
 		real_t Z = sum(unnormedActs);
 		range_divide_val(this->outputActivations[coords], unnormedActs, Z);
@@ -97,9 +102,15 @@ struct SoftmaxLayer: public FlatLayer{
 		View<real_t> outActs = this->outputActivations[coords];
 		View<real_t> outErrs = this->outputErrors[coords];
 		real_t Z = inner_product(outActs, outErrs);
-		LOOP(TDDD t, zip(this->inputErrors[coords], outActs, outErrs))
-		{
-			t.get<0>() = t.get<1>() * (t.get<2>() - Z);
+
+		// eweitnauer: this did not compile on osx for me
+		// LOOP(TDDD t, zip(this->inputErrors[coords], outActs, outErrs))
+		// {
+		// 	t.get<0>() = t.get<1>() * (t.get<2>() - Z);
+		// }
+		// I replaced it with this:
+		for(int i=0; i < outActs.size(); i++) {
+   		this->inputErrors[coords][i] = outActs[i] * (outErrs[i] - Z);
 		}
 	}
 };
